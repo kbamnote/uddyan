@@ -6,7 +6,8 @@ import BlogCard from '../components/BlogCard';
 import SectionHeader from '../components/SectionHeader';
 import AnimatedSection from '../components/AnimatedSection';
 import AutoCarousel, { TestimonialCard, ProductCarouselCard } from '../components/AutoCarousel';
-import { products, blogPosts, testimonials } from '../data';
+import { blogPosts, testimonials } from '../data';
+import { useAppProducts } from '../context/ProductContext';
 import {
   fadeInUp, fadeInLeft, fadeInRight, scaleIn, staggerContainer,
 } from '../lib/animations';
@@ -65,7 +66,7 @@ const features = [
   { icon: Droplets, title: 'Self Watering Technology', description: 'Our innovative wicking system delivers the perfect amount of water to your plants roots.' },
   { icon: Heart, title: 'Minimal Maintenance', description: 'Go up to 30 days without watering. Simply fill the reservoir and let your plants thrive.' },
   { icon: Leaf, title: 'Modern Aesthetic Design', description: 'Each pot is crafted with clean lines and premium materials to complement any interior.' },
-  { icon: Truck, title: 'Free Shipping', description: 'Enjoy free delivery on orders over $100. Your plants arrive carefully packaged.' },
+  { icon: Truck, title: 'Free Shipping', description: 'Enjoy free delivery on orders over ₹500. Your plants arrive carefully packaged.' },
 ];
 
 function Features() {
@@ -96,7 +97,11 @@ function Features() {
 
 // ─── Featured Products ────────────────────────────────────────────────────────
 function FeaturedProducts() {
+  const { products, loading } = useAppProducts();
   const featuredProducts = products.slice(0, 4);
+
+  if (loading) return null;
+
   return (
     <section className="py-24 bg-white">
       <div className="max-w-[1400px] mx-auto px-6 md:px-12">
@@ -230,6 +235,10 @@ function TestimonialsCarousel() {
 
 // ─── Featured Products Carousel ───────────────────────────────────────────────
 function FeaturedProductsCarousel() {
+  const { products, loading } = useAppProducts();
+  
+  if (loading || products.length === 0) return null;
+
   return (
     <section className="py-24 bg-[#f5f0e8]">
       <div className="max-w-[1400px] mx-auto px-6 md:px-12">

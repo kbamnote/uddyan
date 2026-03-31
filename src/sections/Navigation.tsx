@@ -232,7 +232,7 @@ const Navigation = ({ cartItems, onRemoveFromCart, onUpdateQuantity }: Navigatio
                       </div>
                       <div className="flex-1">
                         <h4 className="font-serif text-lg">{item.name}</h4>
-                        <p className="text-[#aea4a4] mt-1">${item.price.toFixed(2)}</p>
+                        <p className="text-[#aea4a4] mt-1">₹{item.price.toFixed(2)}</p>
                         <div className="flex items-center gap-3 mt-3">
                           <button
                             onClick={() => onUpdateQuantity(item.id, Math.max(0, item.quantity - 1))}
@@ -265,7 +265,7 @@ const Navigation = ({ cartItems, onRemoveFromCart, onUpdateQuantity }: Navigatio
               <div className="p-6 border-t bg-[#fafafa]">
                 <div className="flex items-center justify-between mb-6">
                   <span className="text-lg">Subtotal</span>
-                  <span className="font-serif text-xl">${totalPrice.toFixed(2)}</span>
+                  <span className="font-serif text-xl">₹{totalPrice.toFixed(2)}</span>
                 </div>
                 <button className="w-full py-4 bg-[#8b6d4b] text-white font-light tracking-widest btn-hover">
                   {navigationConfig.cartCheckoutText}

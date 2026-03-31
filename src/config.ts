@@ -142,7 +142,7 @@ export const videoSectionConfig: VideoSectionConfig = {
 // ─── Products ────────────────────────────────────────────────────────────────
 
 export interface Product {
-  id: number;
+  id: number | string;
   name: string;
   price: number;
   category: string;

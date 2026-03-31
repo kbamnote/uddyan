@@ -2,22 +2,32 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ShoppingCart, Check, Heart, ShieldCheck, Truck, ArrowLeft } from 'lucide-react';
 
-import { products } from '../data';
+import { useAppProducts } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import AnimatedSection from '../components/AnimatedSection';
 
 export default function ProductDetails() {
   const { id } = useParams();
   const { addToCart } = useCart();
+  const { products, loading } = useAppProducts();
   const [isAdded, setIsAdded] = useState(false);
   
-  // Find the product based on the URL parameter
-  const product = products.find(p => p.id === Number(id));
+  // Find the product based on the URL parameter (convert id to string for resilient matching)
+  const product = products.find(p => String(p.id) === String(id));
 
   // Scroll to top on mount
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-32 pb-20 flex flex-col items-center justify-center bg-[#f5f0e8]">
+        <div className="w-8 h-8 border-2 border-[#5a7c5a] border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-[#5a7c5a]">Loading product details...</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -71,7 +81,7 @@ export default function ProductDetails() {
               <div className="mb-8">
                 <span className="text-sm font-medium text-[#8b6d4b] uppercase tracking-widest">{product.category}</span>
                 <h1 className="font-serif text-4xl lg:text-5xl text-gray-900 mt-2 mb-4">{product.name}</h1>
-                <p className="text-2xl font-medium text-[#5a7c5a]">${product.price.toFixed(2)}</p>
+                <p className="text-2xl font-medium text-[#5a7c5a]">₹{product.price.toFixed(2)}</p>
               </div>
 
               {/* Description */}
@@ -106,7 +116,7 @@ export default function ProductDetails() {
                   <div className="w-10 h-10 rounded-full bg-[#f5f0e8] flex items-center justify-center flex-shrink-0">
                     <Truck className="w-5 h-5 text-[#8b6d4b]" />
                   </div>
-                  <span className="text-sm text-gray-700 font-medium">Free Shipping Over $100</span>
+                  <span className="text-sm text-gray-700 font-medium">Free Shipping Over ₹500</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-[#f5f0e8] flex items-center justify-center flex-shrink-0">

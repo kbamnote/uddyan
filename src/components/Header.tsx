@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingCart, Search, User } from 'lucide-react';
+import { Menu, X, ShoppingCart, Search, User, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { overlayVariant, slideInRight } from '../lib/animations';
 import { useCart } from '../context/CartContext';
-import { products, blogPosts } from '../data';
+import { useAuth } from '../context/AuthContext';
+import { useAppProducts } from '../context/ProductContext';
 
 const navLinks = [
   { label: 'Home', href: '/' },
@@ -18,11 +19,15 @@ const navLinks = [
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
   const { totalItems } = useCart();
+  const { user, logout } = useAuth();
+  const { products } = useAppProducts();
   const location = useLocation();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const isHomePage = location.pathname === '/';
 
@@ -40,8 +45,22 @@ export default function Header() {
   useEffect(() => {
     setIsMenuOpen(false);
     setIsSearchOpen(false);
+    setIsProfileOpen(false);
     setSearchQuery('');
   }, [location]);
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    if (isProfileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isProfileOpen]);
 
   // Lock body scroll when mobile menu or search is open
   useEffect(() => {
@@ -72,19 +91,14 @@ export default function Header() {
 
   // Search results
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return { products: [], posts: [] };
+    if (searchQuery.trim().length < 3) return [];
     const q = searchQuery.toLowerCase();
-    return {
-      products: products.filter(
-        (p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
-      ).slice(0, 4),
-      posts: blogPosts.filter(
-        (p) => p.title.toLowerCase().includes(q) || p.excerpt.toLowerCase().includes(q)
-      ).slice(0, 3),
-    };
-  }, [searchQuery]);
+    return products.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
+    ).slice(0, 6);
+  }, [searchQuery, products]);
 
-  const hasResults = searchResults.products.length > 0 || searchResults.posts.length > 0;
+  const hasResults = searchResults.length > 0;
 
   return (
     <>
@@ -127,13 +141,44 @@ export default function Header() {
               >
                 <Search className="w-5 h-5" />
               </button>
-              <Link
-                to="/login"
-                className={`p-2 hover:bg-white/10 rounded-full transition-colors ${isScrolled ? 'text-gray-700' : 'text-white'
-                  }`}
-              >
-                <User className="w-5 h-5" />
-              </Link>
+              {/* Profile / Login */}
+              <div className="relative" ref={profileRef}>
+                {user ? (
+                  <>
+                    <button
+                      onClick={() => setIsProfileOpen(!isProfileOpen)}
+                      className={`p-2 hover:bg-white/10 rounded-full transition-colors ${isScrolled ? 'text-gray-700' : 'text-white'}`}
+                    >
+                      <User className="w-5 h-5" />
+                    </button>
+                    {isProfileOpen && (
+                      <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
+                        <div className="px-4 py-2 border-b border-gray-100">
+                          <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            logout();
+                            setIsProfileOpen(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Logout
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Link
+                    to="/login"
+                    className={`p-2 hover:bg-white/10 rounded-full transition-colors ${isScrolled ? 'text-gray-700' : 'text-white'}`}
+                  >
+                    <User className="w-5 h-5" />
+                  </Link>
+                )}
+              </div>
               <Link
                 to="/cart"
                 className={`p-2 hover:bg-white/10 rounded-full transition-colors relative ${isScrolled ? 'text-gray-700' : 'text-white'
@@ -216,71 +261,34 @@ export default function Header() {
                       <p className="text-sm text-gray-400 mt-2">Try searching for "ceramic", "watering", or "care"</p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-gray-100">
-                      {/* Product Results */}
-                      {searchResults.products.length > 0 && (
-                        <div className="p-4">
-                          <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 px-2">Plants</h3>
-                          <div className="space-y-1">
-                            {searchResults.products.map((product) => (
-                              <Link
-                                key={product.id}
-                                to={`/product/${product.id}`}
-                                onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
-                                className="flex items-center gap-4 p-2 rounded-lg hover:bg-[#f5f0e8] transition-colors"
-                              >
-                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#f5f0e8] flex-shrink-0">
-                                  <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
-                                  <p className="text-xs text-gray-500">{product.category}</p>
-                                </div>
-                                <span className="text-sm font-medium text-[#5a7c5a]">${product.price}</span>
-                              </Link>
-                            ))}
-                          </div>
+                    <div className="p-4">
+                      <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 px-2">Plants</h3>
+                      <div className="space-y-1">
+                        {searchResults.map((product) => (
                           <Link
-                            to="/plants"
+                            key={product.id}
+                            to={`/product/${product.id}`}
                             onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
-                            className="block text-center text-sm text-[#5a7c5a] hover:text-[#4a6a4a] font-medium mt-2 py-2"
+                            className="flex items-center gap-4 p-2 rounded-lg hover:bg-[#f5f0e8] transition-colors"
                           >
-                            View all plants →
+                            <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#f5f0e8] flex-shrink-0">
+                              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
+                              <p className="text-xs text-gray-500">{product.category}</p>
+                            </div>
+                            <span className="text-sm font-medium text-[#5a7c5a]">₹{product.price}</span>
                           </Link>
-                        </div>
-                      )}
-
-                      {/* Blog Results */}
-                      {searchResults.posts.length > 0 && (
-                        <div className="p-4">
-                          <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 px-2">Articles</h3>
-                          <div className="space-y-1">
-                            {searchResults.posts.map((post) => (
-                              <Link
-                                key={post.id}
-                                to="/blog"
-                                onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
-                                className="flex items-center gap-4 p-2 rounded-lg hover:bg-[#f5f0e8] transition-colors"
-                              >
-                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#f5f0e8] flex-shrink-0">
-                                  <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">{post.title}</p>
-                                  <p className="text-xs text-gray-500 truncate">{post.excerpt}</p>
-                                </div>
-                              </Link>
-                            ))}
-                          </div>
-                          <Link
-                            to="/blog"
-                            onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
-                            className="block text-center text-sm text-[#5a7c5a] hover:text-[#4a6a4a] font-medium mt-2 py-2"
-                          >
-                            View all articles →
-                          </Link>
-                        </div>
-                      )}
+                        ))}
+                      </div>
+                      <Link
+                        to="/plants"
+                        onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
+                        className="block text-center text-sm text-[#5a7c5a] hover:text-[#4a6a4a] font-medium mt-2 py-2"
+                      >
+                        View all plants →
+                      </Link>
                     </div>
                   )}
                 </motion.div>

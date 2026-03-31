@@ -62,7 +62,7 @@ export default function ProductCard({ product, showDetails = true }: ProductCard
             </Link>
           </h3>
           <div className="flex items-center justify-between">
-            <span className="text-lg font-medium text-[#5a7c5a]">${product.price}</span>
+            <span className="text-lg font-medium text-[#5a7c5a]">₹{product.price}</span>
             <button
               onClick={handleAddToCart}
               className={`text-sm px-4 py-2 rounded transition-all ${isAdded

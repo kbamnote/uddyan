@@ -1,15 +1,14 @@
 import { useState, useMemo } from 'react';
 import { Search, SlidersHorizontal, Grid3X3, List, X } from 'lucide-react';
-import { motion } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
 import SectionHeader from '../components/SectionHeader';
-import { products, categories } from '../data';
-import { scaleIn, staggerContainer } from '../lib/animations';
+import { useAppProducts } from '../context/ProductContext';
 
 export default function Plants() {
+  const { products, categories, loading } = useAppProducts();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
   const [sortBy, setSortBy] = useState('featured');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
@@ -28,7 +27,7 @@ export default function Plants() {
       case 'name': result.sort((a, b) => a.name.localeCompare(b.name)); break;
     }
     return result;
-  }, [selectedCategory, searchQuery, priceRange, sortBy]);
+  }, [products, selectedCategory, searchQuery, priceRange, sortBy]);
 
   return (
     <>
@@ -118,14 +117,14 @@ export default function Plants() {
                   <h4 className="font-medium mb-4">Price Range</h4>
                   <div className="space-y-4">
                     <input
-                      type="range" min="0" max="100"
+                      type="range" min="0" max="500"
                       value={priceRange[1]}
                       onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
                       className="w-full accent-[#5a7c5a]"
                     />
                     <div className="flex justify-between text-sm text-gray-600">
-                      <span>${priceRange[0]}</span>
-                      <span>${priceRange[1]}</span>
+                      <span>₹{priceRange[0]}</span>
+                      <span>₹{priceRange[1]}</span>
                     </div>
                   </div>
                 </div>
@@ -142,26 +141,22 @@ export default function Plants() {
                 <div className="text-center py-16">
                   <p className="text-gray-500 text-lg">No products found matching your criteria.</p>
                   <button
-                    onClick={() => { setSelectedCategory('All'); setSearchQuery(''); setPriceRange([0, 100]); }}
+                    onClick={() => { setSelectedCategory('All'); setSearchQuery(''); setPriceRange([0, 500]); }}
                     className="mt-4 text-[#5a7c5a] hover:underline"
                   >
                     Clear all filters
                   </button>
                 </div>
               ) : (
-                <motion.div
-                  key={`${selectedCategory}-${searchQuery}-${sortBy}`}
+                <div
                   className={viewMode === 'grid' ? 'grid sm:grid-cols-2 lg:grid-cols-3 gap-8' : 'space-y-6'}
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
                 >
                   {filteredProducts.map((product) => (
-                    <motion.div key={product.id} variants={scaleIn}>
+                    <div key={product.id} className="transition-opacity duration-200">
                       <ProductCard product={product} showDetails={viewMode === 'grid'} />
-                    </motion.div>
+                    </div>
                   ))}
-                </motion.div>
+                </div>
               )}
             </div>
           </div>

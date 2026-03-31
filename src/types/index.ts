@@ -1,7 +1,7 @@
 // Shared types for Uddyan multi-page website
 
 export interface Product {
-  id: number;
+  id: number | string;
   name: string;
   price: number;
   category: string;

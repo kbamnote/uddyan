@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ShoppingBag, Check } from 'lucide-react';
+import { useAppProducts } from '../context/ProductContext';
 import { productsConfig } from '../config';
 import type { Product } from '../config';
 
@@ -8,12 +9,16 @@ interface ProductsProps {
 }
 
 const Products = ({ onAddToCart }: ProductsProps) => {
-  if (!productsConfig.heading && productsConfig.products.length === 0) return null;
+  const { products, categories, loading } = useAppProducts();
+
+  if (!productsConfig.heading && products.length === 0) return null;
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [activeCategory, setActiveCategory] = useState(productsConfig.categories[0] || 'All');
-  const [addedItems, setAddedItems] = useState<number[]>([]);
+  
+  // Set default category to 'All'
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [addedItems, setAddedItems] = useState<(number|string)[]>([]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -33,9 +38,9 @@ const Products = ({ onAddToCart }: ProductsProps) => {
     return () => observer.disconnect();
   }, []);
 
-  const filteredProducts = activeCategory === productsConfig.categories[0]
-    ? productsConfig.products
-    : productsConfig.products.filter(p => p.category === activeCategory);
+  const filteredProducts = activeCategory === 'All'
+    ? products
+    : products.filter(p => p.category === activeCategory);
 
   const handleAddToCart = (product: Product) => {
     onAddToCart(product);
@@ -44,6 +49,7 @@ const Products = ({ onAddToCart }: ProductsProps) => {
       setAddedItems(prev => prev.filter(id => id !== product.id));
     }, 2000);
   };
+
 
   return (
     <section
@@ -80,14 +86,14 @@ const Products = ({ onAddToCart }: ProductsProps) => {
         </div>
 
         {/* Category Filter */}
-        {productsConfig.categories.length > 0 && (
+        {categories.length > 0 && (
           <div
             className={`flex flex-wrap justify-center gap-4 mb-12 transition-all duration-700 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
             style={{ transitionDelay: '600ms' }}
           >
-            {productsConfig.categories.map((category) => (
+            {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
@@ -100,6 +106,13 @@ const Products = ({ onAddToCart }: ProductsProps) => {
                 {category}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-2 border-[#5a7c5a] border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
 
@@ -148,7 +161,7 @@ const Products = ({ onAddToCart }: ProductsProps) => {
               <div className="p-5 bg-white">
                 <span className="text-xs text-[#aea4a4] tracking-wide uppercase">{product.category}</span>
                 <h3 className="font-serif text-xl text-black mt-1">{product.name}</h3>
-                <p className="text-[#aea4a4] font-medium mt-2">${product.price.toFixed(2)}</p>
+                <p className="text-[#aea4a4] font-medium mt-2">₹{product.price.toFixed(2)}</p>
               </div>
             </div>
           ))}

@@ -1,11 +1,15 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  
+  const { login, register, error, user } = useAuth();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -13,10 +17,29 @@ export default function Login() {
     password: '',
     agreeTerms: false,
   });
+  const [localError, setLocalError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // If user is already logged in, redirect them
+  useEffect(() => {
+    if (user && !isSubmitted) {
+      navigate('/');
+    }
+  }, [user, navigate, isSubmitted]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
+    setLocalError('');
+    
+    let success = false;
+    if (isLogin) {
+      success = await login(formData.email, formData.password);
+    } else {
+      success = await register(formData.name, formData.email, formData.password);
+    }
+
+    if (success) {
+      setIsSubmitted(true);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,6 +125,12 @@ export default function Login() {
                   ? 'Welcome back! Please enter your details.'
                   : 'Join our community of plant lovers today.'}
               </p>
+
+              {(error || localError) && (
+                <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-md text-sm">
+                  {error || localError}
+                </div>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {!isLogin && (

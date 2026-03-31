@@ -5,7 +5,7 @@ import SectionHeader from '../components/SectionHeader';
 import { useAppProducts } from '../context/ProductContext';
 
 export default function Plants() {
-  const { products, categories, loading } = useAppProducts();
+  const { products, categories } = useAppProducts();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
